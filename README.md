@@ -134,3 +134,7 @@ clusterrolebinding.rbac.authorization.k8s.io/tenant0admin created
 ```
 
 NOTE: We do not need to create any Role Bindings for tenant1 as the user is added to the cluster as a standard user, with the ability to create and delete their own project/namespaces.
+
+
+### Click [here](https://github.com/rohitralhan/hypershift-hosted-cluster-acm/README.md) to learn about installing the hosted clusters using ACM.
+
