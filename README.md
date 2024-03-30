@@ -1,4 +1,4 @@
-# Role-based access control based on LDAP
+# Hosted Cluster - Role-based access control based on LDAP
 
 OpenShift supports the configuration of multiple identity providers. A complete list of identity providers can be found here: [Supported Identity Providers](https://docs.openshift.com/container-platform/4.14/authentication/understanding-identity-provider.html#supported-identity-providers) For this example, we will be configuring a simple LDAP provider Red Hat Identity Management. You can use any LDAP of your choice. 
 
