@@ -22,67 +22,115 @@ the steps [Disabling project self-provisioning]
 to disable this feature
 ```
 
-## LDAP Configuration for Management Cluster
+## 1. LDAP Configuration for Management Cluster
 
-**1.Create a file with the following template YAML:|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|   identityProviders:    - ldap:        attributes:          email:            - mail          id:            - sAMAccountName          name:            - cn          preferredUsername:            - sAMAccountName        bindDN: bind\_user        bindPassword:          name: ldap-secret        insecure: true        url: 'LDAP://\<ad\_server\_name>/\<ldap\_directory\_path>?sAMAccountName?sub?((memberOf=CN=ocpmanagement,\<ldap\_directory\_path>))'      mappingMethod: claim      name: ldap      type: LDAP |You will need to update the following sections of the template according to your LDAP setup:* \<ad\_server\_name>  - this will be the fully qualified AD server name.\
+Create a file with the following template YAML:
+```yml
+identityProviders:
+    - ldap:
+        attributes:
+          email:
+            - mail
+          id:
+            - sAMAccountName
+          name:
+            - cn
+          preferredUsername:
+            - sAMAccountName
+        bindDN: bind_user
+        bindPassword:
+          name: ldap-secret
+        insecure: true
+        url: 'LDAP://<ad_server_name>/<ldap_directory_path>?sAMAccountName?sub?((memberOf=CN=ocpmanagement,<ldap_directory_path>))'
+      mappingMethod: claim
+      name: ldap
+      type: LDAP
+```
+
+You will need to update the following sections of the template according to your LDAP setup:
+* \<ad\_server\_name>  - this will be the fully qualified AD server name.\
   eg: `ad.example.com`
-
 * \<ldap\_directory\_path> - this is the search path within the LDAP directory. eg: `CN=Users,DC=ad,DC=example,DC=com`* id - the LDAP attribute identified as the users user name used for login
-
 * Insecure: - for LDAPs set this to false and provide the CA certificate path as a config map. For LDAP set this to true.
+* bindDN and bindPassword - details of the used for binging to LDAPFor additional details about the above parameters please refer to the official [documentation](https://docs.openshift.com/container-platform/4.14/authentication/identity_providers/configuring-ldap-identity-provider.html#identity-provider-ldap-CR_configuring-ldap-identity-provider). We will use this template text for the configuration of the next three sections.
 
-* bindDN and bindPassword - details of the used for binging to LDAPFor additional details about the above parameters please refer to the official [documentation](https://docs.openshift.com/container-platform/4.14/authentication/identity_providers/configuring-ldap-identity-provider.html#identity-provider-ldap-CR_configuring-ldap-identity-provider)We will use this template text for the configuration of the next three sections.**
-==============================================================================================================================================================================================================================================================================================================================================================================================================================================
+## 1.1. Apply LDAP bind\_user password
 
-###
+Create a secret to hold the password for the bind\_user, making sure to update “\<secret>” with the password for the _bind\_user
 
-## Apply LDAP bind\_user password
+```
+$ export KUBECONFIG=kubeconfig-management
 
-# **2.Create a secret to hold the password for the bind\_user, making sure to update “\<secret>” with the password for the _bind\_user_|                                                                                                                                                                                                                                                                                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$ export KUBECONFIG=kubeconfig-management``# this will create a secret used by the management cluster``$ oc create secret generic ldap-secret --from-literal=bindPassword=<secret> \``  -n openshift-config``# this will create a secret used by the tenant clusters``$ oc create secret generic ldap-secret --from-literal=bindPassword=<secret> \``  -n clusters` |**
+# this will create a secret used by the management cluster
+$ oc create secret generic ldap-secret --from-literal=bindPassword=<secret>
+  -n openshift-config
 
-## Apply LDAP configuration for hub cluster
+# this will create a secret used by the tenant clusters
+$ oc create secret generic ldap-secret --from-literal=bindPassword=<secret>
+  -n clusters
+```
 
-# **3)1. Log into the hub cluster with the _kubeadmin_ username/password as shown here using the `oc login -u kubeadmin` command for details refer to the official [documentation](https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html#cli-logging-in_cli-developer-commands).
+## 1.2. Apply LDAP configuration for hub cluster
 
+1. Log into the hub cluster with the _kubeadmin_ username/password as shown here using the `oc login -u kubeadmin` command for details refer to the official [documentation](https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html#cli-logging-in_cli-developer-commands).
 2. Run the command `oc edit oauth cluster`
+3. In the editor that opens, scroll down to the `spec:` section, and add the contents of the ldap template from step [LDAP Configuration for Management Cluster](https://docs.google.com/document/d/12IiTnsDZmbPd4XdZTIeJMmYF9AFkgBTGgbRywS1tmgk/edit#heading=h.arfpm2d7nb3i). The result should look something like this:
 
-3. In the editor that opens, scroll down to the `spec:` section, and add the contents of the ldap template from step [LDAP Configuration for Management Cluster](https://docs.google.com/document/d/12IiTnsDZmbPd4XdZTIeJMmYF9AFkgBTGgbRywS1tmgk/edit#heading=h.arfpm2d7nb3i). The result should look something like this:![](https://lh7-us.googleusercontent.com/G128GY8KCWQUe3TXpWF5CoE9TYMewRuWXNk6m-u-TiximpmTVDXjEjxxzkrfTkYtUiuqiYQQO8kOxpTlopnA7CQHLyH3siKLcfjuoLdxKtWYctglC2bRcw7qHmutgSlxIv5JowTZa5eAD3RN8pSAff8)**NOTE: ONLY EDIT THE “spec” section**, do not edit any other section.4. Save the file and the cluster will update to use both the `kubeadmin` as well as `LDAP authentication`. In order to test this login with LDAP (called ldapipa in this case) in the openshift console using as shown in the below screenshot**
+![](https://lh7-us.googleusercontent.com/G128GY8KCWQUe3TXpWF5CoE9TYMewRuWXNk6m-u-TiximpmTVDXjEjxxzkrfTkYtUiuqiYQQO8kOxpTlopnA7CQHLyH3siKLcfjuoLdxKtWYctglC2bRcw7qHmutgSlxIv5JowTZa5eAD3RN8pSAff8)
 
-### ![](https://lh7-us.googleusercontent.com/_h5bVhoktzviHKu414QApDClrAz-hSyx_SEoXbS99TeiWg1_WoeTdRvI1vhaUCb1kflR2YK_56SqYBkC0dHrv0I_9TI5YJdtVGnOLql8bqFSd2iOhL7hOY45h60H1gd1s0fyewGCNOuXL7rTw38YQ_s)
+```diff
+- NOTE: ONLY EDIT THE "spec" section**, do not edit any other section.
+```
+4. Save the file and the cluster will update to use both the `kubeadmin` as well as `LDAP authentication`. In order to test this login with LDAP (called ldapipa in this case) in the openshift console  as shown in the screenshot below
+![](https://lh7-us.googleusercontent.com/_h5bVhoktzviHKu414QApDClrAz-hSyx_SEoXbS99TeiWg1_WoeTdRvI1vhaUCb1kflR2YK_56SqYBkC0dHrv0I_9TI5YJdtVGnOLql8bqFSd2iOhL7hOY45h60H1gd1s0fyewGCNOuXL7rTw38YQ_s)
 
-# ****
+## 1.3. Apply LDAP configuration for Hosted (tenant1) Cluster
 
-###
-
-## Apply LDAP configuration for Hosted (tenant1) Cluster
-
-**4)1. Log into the hub cluster with the _kubeadmin_ username/password as shown here using the `oc login -u kubeadmin` command for details refer to the official [documentation](https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html#cli-logging-in_cli-developer-commands).
-
+1. Log into the hub cluster with the _kubeadmin_ username/password as shown here using the `oc login -u kubeadmin` command for details refer to the official [documentation](https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html#cli-logging-in_cli-developer-commands).
 2. Run the command `oc edit oauth cluster -n clusters`
+3. Using the example YAML above, update the tenant1 hosted configuration adding lines under configuration: → oauth: section to the configuration file, making sure to update the url as described below:
+   * \<ad\_server\_name>  - this will be the fully qualified AD server name. eg: `ad.example.com`
+   * \<ldap\_directory\_path> - this is the path within the LDAP directory. eg: `CN=Users,DC=ad,DC=example,DC=com`
+   * Don’t forget to adjust the LDAP URL based on your LDAP setup for the hosted cluster.
 
-3. Using the example YAML above, update the tenant1 hosted configuration adding lines under configuration: → oauth: section to the configuration file, making sure to update the url as described below:|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-|   identityProviders:    - ldap:        attributes:          email:            - mail          id:            - sAMAccountName          name:            - cn          preferredUsername:            - sAMAccountName        bindDN: bind\_user        bindPassword:          name: ldap-secret        insecure: true        url: 'LDAP://\<ad\_server\_name>/\<ldap\_directory\_path>?CN=Users,DC=ad,DC=xphyrlab,DC=net?sAMAccountName?sub?((memberOf=CN=ocptenant1,CN=Users,DC=ad,DC=xphyrlab,DC=net))'      mappingMethod: claim      name: ldap      type: LDAP |*  \<ad\_server\_name>  - this will be the fully qualified AD server name.\
-  eg: `ad.example.com`
-
-* \<ldap\_directory\_path> - this is the path within the LDAP directory. eg: `CN=Users,DC=ad,DC=example,DC=com`- Don’t forget to adjust the LDAP URL based on your LDAP setup for the hosted cluster.4) Replace “ocpmanagement” with “ocptenant1” in the same URL line. The final result should look similar to this\
-   ![](https://lh7-us.googleusercontent.com/ktpUU8LvRz1dDGN9D-Z-bG_K36qW5Gk7u6k9jialYKVVL5ohgAcPRg1HGz0Mz2fmJlnRdQBvMN9tnDwxPcU88dSyPh_aTfhik26khYREIMhHcuEFjEhwUNA3dqaoHB15mxucjxynN6XMhtpRSsqFabU)5. Save the file and the hosted tenant1 cluster will update to use LDAP authentication. In order to test this login with LDAP (called ldapipa in this case) in the openshift console using as shown in the below screenshot**
-=================================================================================================================================================================================================================================================================================================================================================================================================================================
+4. Replace “ocpmanagement” with “ocptenant1” in the same URL line. The final result should look similar to this\
+   ![](https://lh7-us.googleusercontent.com/ktpUU8LvRz1dDGN9D-Z-bG_K36qW5Gk7u6k9jialYKVVL5ohgAcPRg1HGz0Mz2fmJlnRdQBvMN9tnDwxPcU88dSyPh_aTfhik26khYREIMhHcuEFjEhwUNA3dqaoHB15mxucjxynN6XMhtpRSsqFabU)
+5. Save the file and the hosted tenant1 cluster will update to use LDAP authentication. In order to test this login with LDAP (called ldapipa in this case) in the openshift console using as shown in the below screenshot
 
 ### ![](https://lh7-us.googleusercontent.com/_h5bVhoktzviHKu414QApDClrAz-hSyx_SEoXbS99TeiWg1_WoeTdRvI1vhaUCb1kflR2YK_56SqYBkC0dHrv0I_9TI5YJdtVGnOLql8bqFSd2iOhL7hOY45h60H1gd1s0fyewGCNOuXL7rTw38YQ_s)
+Similarly update any other cluster to start using LDAP for authentication.**
 
-# **Similarly update any other cluster to start using LDAP for authentication.**
+## 1.4. Apply RBAC for tenant0 user
 
-###
+First we will create a ClusterRoleBinding for the “tenant0” user. This ClusterRoleBinding file will be applied to the “management”, “tenant1” and “tenant2” clusters to ensure that this user has full cluster access.crb\_tenant0.yaml
+```yml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tenant0admin
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: tenant0
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+```
 
-## Apply RBAC for tenant0 user
+Now we will apply this Kubernetes role binding to the hub and the hosted clusters:
+```yml
+# connect to the management cluster
+$ export KUBECONFIG=kubeconfig-management
+$ oc create -f crb_tenant0.yaml
+clusterrolebinding.rbac.authorization.k8s.io/tenant0admin created
 
-# 5.First we will create a ClusterRoleBinding for the “tenant0” user. This ClusterRoleBinding file will be applied to the “management”, “tenant1” and “tenant2” clusters to ensure that this user has full cluster access.crb\_tenant0.yaml|                                                                                                                                                                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kind: ClusterRoleBinding``apiVersion: rbac.authorization.k8s.io/v1``metadata:``  name: tenant0admin``subjects:``  - kind: User``    apiGroup: rbac.authorization.k8s.io``    name: tenant0``roleRef:``  apiGroup: rbac.authorization.k8s.io``  kind: ClusterRole``  name: cluster-admin` |Now we will apply this Kubernetes role binding to the hub and the hosted clusters:|                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `# connect to the management cluster``$ export KUBECONFIG=kubeconfig-management``$ oc create -f crb_tenant0.yaml``clusterrolebinding.rbac.authorization.k8s.io/tenant0admin created``# connect to the tenant1 cluster``$ export KUBECONFIG=kubeconfig-tenant1``$ oc create -f crb_tenant0.yaml``clusterrolebinding.rbac.authorization.k8s.io/tenant0admin created``# similarly the above commands can be executed for any hosted cluster` |NOTE: We do not need to create any Role Bindings for tenant1 as the user is added to the cluster as a standard user, with the ability to create and delete their own project/namespaces.
+# connect to the tenant1 cluster
+$ export KUBECONFIG=kubeconfig-tenant1
+$ oc create -f crb_tenant0.yaml
+clusterrolebinding.rbac.authorization.k8s.io/tenant0admin created
+
+# similarly the above commands can be executed for any hosted cluster
+```
+
+NOTE: We do not need to create any Role Bindings for tenant1 as the user is added to the cluster as a standard user, with the ability to create and delete their own project/namespaces.
