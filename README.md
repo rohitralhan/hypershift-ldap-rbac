@@ -76,13 +76,13 @@ $ oc create secret generic ldap-secret --from-literal=bindPassword=<secret>
 2. Run the command `oc edit oauth cluster`
 3. In the editor that opens, scroll down to the `spec:` section, and add the contents of the ldap template from step [LDAP Configuration for Management Cluster](https://docs.google.com/document/d/12IiTnsDZmbPd4XdZTIeJMmYF9AFkgBTGgbRywS1tmgk/edit#heading=h.arfpm2d7nb3i). The result should look something like this:
 
-![](https://lh7-us.googleusercontent.com/G128GY8KCWQUe3TXpWF5CoE9TYMewRuWXNk6m-u-TiximpmTVDXjEjxxzkrfTkYtUiuqiYQQO8kOxpTlopnA7CQHLyH3siKLcfjuoLdxKtWYctglC2bRcw7qHmutgSlxIv5JowTZa5eAD3RN8pSAff8)
+![](https://github.com/rohitralhan/hypershift-ldap-rbac/blob/main/images/edit-ldap-1.png)
 
 ```diff
 - NOTE: ONLY EDIT THE "spec" section**, do not edit any other section.
 ```
 4. Save the file and the cluster will update to use both the `kubeadmin` as well as `LDAP authentication`. In order to test this login with LDAP (called ldapipa in this case) in the openshift console  as shown in the screenshot below
-![](https://lh7-us.googleusercontent.com/_h5bVhoktzviHKu414QApDClrAz-hSyx_SEoXbS99TeiWg1_WoeTdRvI1vhaUCb1kflR2YK_56SqYBkC0dHrv0I_9TI5YJdtVGnOLql8bqFSd2iOhL7hOY45h60H1gd1s0fyewGCNOuXL7rTw38YQ_s)
+![](https://github.com/rohitralhan/hypershift-ldap-rbac/blob/main/images/login.png)
 
 ## 1.3. Apply LDAP configuration for Hosted (tenant1) Cluster
 
@@ -94,10 +94,10 @@ $ oc create secret generic ldap-secret --from-literal=bindPassword=<secret>
    * Don’t forget to adjust the LDAP URL based on your LDAP setup for the hosted cluster.
 
 4. Replace “ocpmanagement” with “ocptenant1” in the same URL line. The final result should look similar to this\
-   ![](https://lh7-us.googleusercontent.com/ktpUU8LvRz1dDGN9D-Z-bG_K36qW5Gk7u6k9jialYKVVL5ohgAcPRg1HGz0Mz2fmJlnRdQBvMN9tnDwxPcU88dSyPh_aTfhik26khYREIMhHcuEFjEhwUNA3dqaoHB15mxucjxynN6XMhtpRSsqFabU)
+   ![](https://github.com/rohitralhan/hypershift-ldap-rbac/blob/main/images/edit-ldap-2.png)
 5. Save the file and the hosted tenant1 cluster will update to use LDAP authentication. In order to test this login with LDAP (called ldapipa in this case) in the openshift console using as shown in the below screenshot
 
-### ![](https://lh7-us.googleusercontent.com/_h5bVhoktzviHKu414QApDClrAz-hSyx_SEoXbS99TeiWg1_WoeTdRvI1vhaUCb1kflR2YK_56SqYBkC0dHrv0I_9TI5YJdtVGnOLql8bqFSd2iOhL7hOY45h60H1gd1s0fyewGCNOuXL7rTw38YQ_s)
+![](https://github.com/rohitralhan/hypershift-ldap-rbac/blob/main/images/login.png)
 Similarly update any other cluster to start using LDAP for authentication.**
 
 ## 1.4. Apply RBAC for tenant0 user
